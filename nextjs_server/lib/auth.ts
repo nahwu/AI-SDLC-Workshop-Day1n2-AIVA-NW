@@ -94,7 +94,15 @@ export async function setSessionCookie(
 export async function deleteSessionCookie(
   response: NextResponse
 ): Promise<NextResponse> {
-  response.cookies.delete(SESSION_COOKIE_NAME)
+  response.cookies.set({
+    name: SESSION_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  })
   return response
 }
 

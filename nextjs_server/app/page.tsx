@@ -484,9 +484,6 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <button className="px-3 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-800 font-medium text-sm">
-                Logout
-              </button>
             </nav>
           </header>
 
