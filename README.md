@@ -6,6 +6,14 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
 
 ---
 
+## 🚀 Quick Links
+
+- **[Deploy to Railway (5 min)](./RAILWAY_QUICK_START.md)** - Deploy this app to production
+- **[Deployment Checklist](./RAILWAY_DEPLOYMENT_CHECKLIST.md)** - Complete deployment guide
+- **[Deployment Summary](./DEPLOYMENT_SUMMARY.md)** - Configuration overview
+
+---
+
 ## Table of Contents
 1. [Install Visual Studio Code](#1-install-visual-studio-code)
 2. [Install GitHub Copilot](#2-install-github-copilot)
@@ -14,7 +22,8 @@ Reference : https://ai-sdlc-workshop-day1-production.up.railway.app/login
 5. [Run the Application](#5-run-the-application)
 6. [Use GitHub Copilot with PRPs](#6-use-github-copilot-with-prps)
 7. [Verify Core Features](#7-verify-core-features)
-8. [Troubleshooting](#troubleshooting)
+8. [Deploy to Production](#8-deploy-to-production)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -610,7 +619,47 @@ npm start
 
 ---
 
-## Additional Resources
+## 8. Deploy to Production
+
+### Railway Deployment (Recommended)
+
+Deploy your Todo App to Railway in just 5 minutes!
+
+#### Quick Deploy
+
+1. **Follow the [Quick Start Guide](./RAILWAY_QUICK_START.md)**
+   - Create Railway account
+   - Connect GitHub repository
+   - Add persistent volume
+   - Deploy!
+
+2. **Your app will be live at:** `https://your-app.railway.app`
+
+#### Comprehensive Guides
+
+- 📘 **[Quick Start (5 min)](./RAILWAY_QUICK_START.md)** - Fastest way to deploy
+- 📗 **[Deployment Checklist](./RAILWAY_DEPLOYMENT_CHECKLIST.md)** - Complete guide with troubleshooting
+- 📙 **[Deployment Summary](./DEPLOYMENT_SUMMARY.md)** - Configuration overview
+- 📕 **[Simple Setup](./RAILWAY_SIMPLE_SETUP.md)** - GitHub integration guide
+
+#### What's Included
+
+✅ Automatic deployments on Git push  
+✅ Persistent database storage  
+✅ HTTPS/SSL certificates  
+✅ Singapore timezone configuration  
+✅ Production-optimized build  
+✅ Environment variable management  
+
+#### Cost
+
+- **Free tier:** $5 credit/month
+- **Developer plan:** $5/month (recommended)
+- **Estimated usage:** ~$3-5/month
+
+---
+
+## Troubleshooting
 
 - **VS Code Docs**: https://code.visualstudio.com/docs
 - **GitHub Copilot Docs**: https://docs.github.com/en/copilot

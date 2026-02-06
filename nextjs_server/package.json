@@ -13,7 +13,8 @@
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
     "test:unit:run": "vitest run",
-    "test:all": "npm run test:unit:run && npm run test"
+    "test:all": "npm run test:unit:run && npm run test",
+    "verify:deploy": "node ../scripts/verify-deployment-config.js"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^9.0.0",
