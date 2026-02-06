@@ -7,8 +7,8 @@ ENV TZ=Asia/Singapore
 
 FROM base AS deps
 RUN apk add --no-cache python3 make g++ sqlite
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json ./
+RUN npm install
 
 FROM deps AS builder
 COPY . .

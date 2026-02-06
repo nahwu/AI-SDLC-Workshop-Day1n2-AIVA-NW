@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         residentKey: 'preferred',
         userVerification: 'preferred',
       },
-      excludeCredentials: authenticators.map(auth => ({
+      excludeCredentials: authenticators.map((auth: { credential_id: string }) => ({
         id: fromBase64Url(auth.credential_id),
         type: 'public-key' as const,
       })),

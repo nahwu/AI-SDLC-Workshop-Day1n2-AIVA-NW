@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 
-export default function LoginPage() {
+//Suspense wrapper component
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get('next') || '/'
@@ -170,5 +171,18 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </main>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }

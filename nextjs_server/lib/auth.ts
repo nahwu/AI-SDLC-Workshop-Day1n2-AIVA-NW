@@ -16,6 +16,7 @@ export interface SessionPayload {
   username: string
   iat?: number
   exp?: number
+  [key: string]: unknown
 }
 
 /**
