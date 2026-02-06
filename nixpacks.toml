@@ -1,0 +1,26 @@
+# Nixpacks configuration for Railway deployment
+# This ensures proper build configuration for Next.js with better-sqlite3
+
+[phases.setup]
+nixPkgs = ["nodejs-20_x", "python3", "gcc", "gnumake"]
+aptPkgs = ["sqlite3"]
+
+[phases.install]
+cmds = [
+    "cd nextjs_server",
+    "npm ci --include=dev"
+]
+
+[phases.build]
+cmds = [
+    "cd nextjs_server",
+    "npm run build"
+]
+
+[start]
+cmd = "cd nextjs_server && npm start"
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+TZ = "Asia/Singapore"
