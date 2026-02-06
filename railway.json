@@ -1,0 +1,5 @@
+{
+  "build": {
+    "rootDir": "nextjs_server"
+  }
+}
