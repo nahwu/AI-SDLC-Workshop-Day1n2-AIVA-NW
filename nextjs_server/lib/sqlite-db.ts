@@ -185,13 +185,22 @@ export function createUser(username: string) {
 export function getAuthenticatorByCredentialId(credentialId: string) {
   const database = getDb()
   const stmt = database.prepare('SELECT * FROM authenticators WHERE credential_id = ?')
-  return stmt.get(credentialId) as any || null
+  const row = stmt.get(credentialId) as any
+  if (!row) return null
+  return {
+    ...row,
+    transports: row.transports ? JSON.parse(row.transports) : undefined,
+  }
 }
 
 export function getAuthenticatorsByUserId(userId: string) {
   const database = getDb()
   const stmt = database.prepare('SELECT * FROM authenticators WHERE user_id = ?')
-  return stmt.all(userId) as any[]
+  const rows = stmt.all(userId) as any[]
+  return rows.map(row => ({
+    ...row,
+    transports: row.transports ? JSON.parse(row.transports) : undefined,
+  }))
 }
 
 export function createAuthenticator(

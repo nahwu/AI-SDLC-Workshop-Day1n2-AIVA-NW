@@ -5,9 +5,28 @@ import { getNowSingaporeDateString, toSingaporeDateTimeString } from './timezone
 // In-memory mock database for development
 // For production, use Prisma + PostgreSQL or better-sqlite3
 
-// Use global to persist across hot reloads in development
+interface User {
+  id: string
+  username: string
+  created_at: string
+  updated_at: string
+}
+
+interface Authenticator {
+  id: string
+  user_id: string
+  credential_id: string
+  public_key: string
+  counter: number
+  transports?: string[]
+  created_at: string
+  updated_at: string
+}
+
 declare global {
   var __mockDB: {
+    userStore?: Map<string, User>
+    authenticatorStore?: Map<string, Authenticator>
     todoStore: Map<string, TodoWithDetails>
     tagStore: Map<string, Tag>
     templateStore: Map<string, Template>
@@ -18,13 +37,19 @@ declare global {
 
 if (!global.__mockDB) {
   global.__mockDB = {
+    userStore: new Map<string, User>(),
+    authenticatorStore: new Map<string, Authenticator>(),
     todoStore: new Map(),
     tagStore: new Map(),
     templateStore: new Map(),
     subtaskStore: new Map(),
     reminderStore: new Map(),
+
   }
 }
+
+const userStore = global.__mockDB.userStore || new Map()
+const authenticatorStore = global.__mockDB.authenticatorStore || new Map()
 
 const todoStore = global.__mockDB.todoStore
 const tagStore = global.__mockDB.tagStore
@@ -39,11 +64,78 @@ export function generateId(): string {
 }
 
 export function resetMockDB(): void {
+  userStore.clear()
+  authenticatorStore.clear()
   todoStore.clear()
   tagStore.clear()
   templateStore.clear()
   subtaskStore.clear()
   reminderStore.clear()
+}
+
+// User operations
+export function getUserByUsername(username: string): User | null {
+  for (const user of userStore.values()) {
+    if (user.username === username) return user
+  }
+  return null
+}
+
+export function getUserById(userId: string): User | null {
+  return userStore.get(userId) || null
+}
+
+export function createUser(username: string): User {
+  const id = generateId()
+  const now = toSingaporeDateTimeString(new Date())
+  const user: User = { id, username, created_at: now, updated_at: now }
+  userStore.set(id, user)
+  return user
+}
+
+// Authenticator operations
+export function getAuthenticatorByCredentialId(credentialId: string): Authenticator | null {
+  for (const auth of authenticatorStore.values()) {
+    if (auth.credential_id === credentialId) return auth
+  }
+  return null
+}
+
+export function getAuthenticatorsByUserId(userId: string): Authenticator[] {
+  return Array.from(authenticatorStore.values()).filter(a => a.user_id === userId)
+}
+
+export function createAuthenticator(
+  userId: string,
+  credentialId: string,
+  publicKey: string,
+  counter: number,
+  transports?: string[]
+): Authenticator {
+  const id = generateId()
+  const now = toSingaporeDateTimeString(new Date())
+  const authenticator: Authenticator = {
+    id,
+    user_id: userId,
+    credential_id: credentialId,
+    public_key: publicKey,
+    counter,
+    transports,
+    created_at: now,
+    updated_at: now,
+  }
+  authenticatorStore.set(id, authenticator)
+  return authenticator
+}
+
+export function updateAuthenticatorCounter(credentialId: string, counter: number): void {
+  for (const authenticator of authenticatorStore.values()) {
+    if (authenticator.credential_id === credentialId) {
+      authenticator.counter = counter
+      authenticator.updated_at = toSingaporeDateTimeString(new Date())
+      break
+    }
+  }
 }
 
 // Seed initial data
@@ -88,12 +180,16 @@ export function initializeData() {
 }
 
 // Todo operations
-export async function getTodos(): Promise<TodoWithDetails[]> {
+export async function getTodos(userId?: string): Promise<TodoWithDetails[]> {
   // Commented out for testing - no initial data
   // if (todoStore.size === 0) {
   //   initializeData()
   // }
-  return Array.from(todoStore.values()).sort((a: any, b: any) => {
+  const filtered = userId
+    ? Array.from(todoStore.values()).filter(todo => todo.user_id === userId)
+    : Array.from(todoStore.values())
+
+  return filtered.sort((a: any, b: any) => {
     const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
     const diff = priorityOrder[a.priority] - priorityOrder[b.priority]
     if (diff !== 0) return diff
@@ -123,6 +219,7 @@ export async function createTodo(data: {
 }): Promise<TodoWithDetails> {
   const id = generateId()
   const now = getNowSingaporeDateString()
+  const userId = data.user_id || MOCK_USER_ID
 
   const subtasks = (data.subtasks || []).map((title, idx) => ({
     id: generateId(),
@@ -153,7 +250,7 @@ export async function createTodo(data: {
 
   const todo: TodoWithDetails = {
     id,
-    user_id: MOCK_USER_ID,
+    user_id: userId,
     title: data.title,
     description: data.description,
     priority: data.priority || 'medium',
@@ -245,26 +342,28 @@ export async function deleteTodo(id: string): Promise<void> {
 }
 
 // Tag operations
-export async function getTags(): Promise<Tag[]> {
-  return Array.from(tagStore.values())
+export async function getTags(userId?: string): Promise<Tag[]> {
+  const tags = Array.from(tagStore.values())
+  return userId ? tags.filter(tag => tag.user_id === userId) : tags
 }
 
 export async function getTagById(id: string): Promise<Tag | null> {
   return tagStore.get(id) || null
 }
 
-export async function createTag(data: {
-  name: string
+export async function createTag(
+  userId: string,
+  name: string,
   color?: string
-}): Promise<Tag> {
+): Promise<Tag> {
   const id = generateId()
   const now = getNowSingaporeDateString()
 
   const tag: Tag = {
     id,
-    user_id: MOCK_USER_ID,
-    name: data.name,
-    color: data.color || '#3b82f6',
+    user_id: userId,
+    name,
+    color: color || '#3b82f6',
     created_at: now,
     updated_at: now,
   }
@@ -294,15 +393,16 @@ export async function deleteTag(id: string): Promise<void> {
 }
 
 // Template operations
-export async function getTemplates(): Promise<Template[]> {
-  return Array.from(templateStore.values())
+export async function getTemplates(userId?: string): Promise<Template[]> {
+  const templates = Array.from(templateStore.values())
+  return userId ? templates.filter(template => template.user_id === userId) : templates
 }
 
 export async function getTemplateById(id: string): Promise<Template | null> {
   return templateStore.get(id) || null
 }
 
-export async function createTemplate(data: {
+export async function createTemplate(userId: string, data: {
   name: string
   title: string
   description?: string
@@ -316,7 +416,7 @@ export async function createTemplate(data: {
 
   const template: Template = {
     id,
-    user_id: MOCK_USER_ID,
+    user_id: userId,
     name: data.name,
     title: data.title,
     description: data.description,
