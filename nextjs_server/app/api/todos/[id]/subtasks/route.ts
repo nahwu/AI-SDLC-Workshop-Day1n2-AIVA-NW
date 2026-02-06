@@ -1,11 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { todoDB } from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const body = await request.json()
     const { title } = body
@@ -18,7 +23,7 @@ export async function POST(
     }
 
     const todo = await todoDB.getById(id)
-    if (!todo) {
+    if (!todo || todo.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Todo not found' },
         { status: 404 }

@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { templateDB, todoDB } from '@/lib/db'
 import { getNowSingapore, toSingaporeDateString } from '@/lib/timezone'
+import { getSession } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const template = await templateDB.getById(id)
 
-    if (!template) {
+    if (!template || template.user_id !== session.userId) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
@@ -23,9 +28,7 @@ export async function POST(
         })()
       : undefined
 
-    // Get user_id from request body or use default
-    const body = await request.json().catch(() => ({}))
-    const userId = body.user_id || 'user-1'
+    const userId = session.userId
 
     const subtasks = template.subtasks_json ? JSON.parse(template.subtasks_json) : []
     const created = todoDB.create({

@@ -46,10 +46,17 @@ if (!global.__mockDB) {
     reminderStore: new Map(),
 
   }
+} else {
+  if (!global.__mockDB.userStore) {
+    global.__mockDB.userStore = new Map<string, User>()
+  }
+  if (!global.__mockDB.authenticatorStore) {
+    global.__mockDB.authenticatorStore = new Map<string, Authenticator>()
+  }
 }
 
-const userStore = global.__mockDB.userStore || new Map()
-const authenticatorStore = global.__mockDB.authenticatorStore || new Map()
+const userStore = global.__mockDB.userStore!
+const authenticatorStore = global.__mockDB.authenticatorStore!
 
 const todoStore = global.__mockDB.todoStore
 const tagStore = global.__mockDB.tagStore
@@ -540,7 +547,7 @@ export async function importAll(payload: any): Promise<{ todos: number; tags: nu
 
     const newTag: Tag = {
       id: generateId(),
-      user_id: MOCK_USER_ID,
+      user_id: tag.user_id || MOCK_USER_ID,
       name: tag.name,
       color: tag.color || '#3b82f6',
       created_at: now,
@@ -587,7 +594,7 @@ export async function importAll(payload: any): Promise<{ todos: number; tags: nu
 
     const newTodo: TodoWithDetails = {
       id: newTodoId,
-      user_id: MOCK_USER_ID,
+      user_id: todo.user_id || MOCK_USER_ID,
       title: todo.title,
       description: todo.description,
       priority: todo.priority || 'medium',
@@ -611,7 +618,7 @@ export async function importAll(payload: any): Promise<{ todos: number; tags: nu
   payload.templates.forEach((template: Template) => {
     const newTemplate: Template = {
       id: generateId(),
-      user_id: MOCK_USER_ID,
+      user_id: template.user_id || MOCK_USER_ID,
       name: template.name,
       title: template.title,
       description: template.description,

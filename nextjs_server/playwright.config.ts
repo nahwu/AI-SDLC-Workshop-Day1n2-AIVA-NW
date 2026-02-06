@@ -10,10 +10,12 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  globalSetup: './tests/e2e/global-setup.ts',
   use: {
     baseURL,
     trace: 'on-first-retry',
     timezoneId: 'Asia/Singapore',
+    storageState: './tests/e2e/auth-state.json',
   },
   webServer: useExternalServer
     ? undefined

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const credentialId = response.id as string
     const authenticator = await getAuthenticatorByCredentialId(credentialId)
 
-    if (!authenticator) {
+    if (!authenticator || authenticator.user_id !== user.id) {
       return NextResponse.json({ error: 'Authenticator not found' }, { status: 404 })
     }
 

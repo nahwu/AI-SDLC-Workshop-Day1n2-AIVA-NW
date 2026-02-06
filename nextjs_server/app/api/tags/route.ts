@@ -1,11 +1,15 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { CreateTagSchema } from '@/lib/validation'
 import { tagDB } from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user_id from query params or use default
-    const userId = request.nextUrl.searchParams.get('user_id') || 'user-1'
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+    const userId = session.userId
     const tags = await tagDB.getAll(userId)
 
     return NextResponse.json({
@@ -23,11 +27,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const body = await request.json()
     const validated = CreateTagSchema.parse(body)
 
-    // Get user_id from request body or use default
-    const userId = body.user_id || 'user-1'
+    const userId = session.userId
 
     const tag = await tagDB.create(userId, validated.name, validated.color)
 

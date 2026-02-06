@@ -1,12 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { CreateTodoSchema } from '@/lib/validation'
-import { todoDB } from '@/lib/db'
+import { tagDB, todoDB } from '@/lib/db'
 import { formatSingaporeDate, getSingaporeNow } from '@/lib/timezone'
+import { getSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user_id from query params or use default
-    const userId = request.nextUrl.searchParams.get('user_id') || 'user-1'
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+    const userId = session.userId
     const todos = await todoDB.getAll(userId)
     return NextResponse.json({
       success: true,
@@ -23,6 +27,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const body = await request.json()
     console.log('POST /api/todos body:', body)
     
@@ -41,8 +49,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Reminders require a due date' }, { status: 400 })
     }
 
-    // Use user_id from request body or default to 'user-1'
-    const userId = body.user_id || 'user-1'
+    if (validated.tag_ids?.length) {
+      const tags = await Promise.all(validated.tag_ids.map(id => tagDB.getById(id)))
+      const invalid = tags.some(tag => !tag || tag.user_id !== userId)
+      if (invalid) {
+        return NextResponse.json({ error: 'Tag not found' }, { status: 404 })
+      }
+    }
+
+    const userId = session.userId
 
     const todo = await todoDB.create({
       user_id: userId,

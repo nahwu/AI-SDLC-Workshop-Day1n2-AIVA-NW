@@ -2,16 +2,21 @@ import { NextResponse, NextRequest } from 'next/server'
 import { UpdateTodoSchema } from '@/lib/validation'
 import { setReminderForTodo, tagDB, todoDB } from '@/lib/db'
 import { formatSingaporeDate, getSingaporeNow } from '@/lib/timezone'
+import { getSession } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const todo = await todoDB.getById(id)
 
-    if (!todo) {
+    if (!todo || todo.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Todo not found' },
         { status: 404 }
@@ -36,12 +41,16 @@ async function handleUpdate(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const body = await request.json()
     const validated = UpdateTodoSchema.parse(body)
 
     const todo = await todoDB.getById(id)
-    if (!todo) {
+    if (!todo || todo.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Todo not found' },
         { status: 404 }
@@ -69,7 +78,8 @@ async function handleUpdate(
     }
 
     const tags = validated.tag_ids
-      ? (await Promise.all(validated.tag_ids.map(id => tagDB.getById(id)))).filter(Boolean)
+      ? (await Promise.all(validated.tag_ids.map(id => tagDB.getById(id))))
+          .filter(tag => tag && tag.user_id === session.userId)
       : todo.tags
 
     const reminders =
@@ -133,9 +143,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const todo = await todoDB.getById(id)
-    if (!todo) {
+    if (!todo || todo.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Todo not found' },
         { status: 404 }

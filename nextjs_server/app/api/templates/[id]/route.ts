@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { templateDB } from '@/lib/db'
 import { CreateTemplateSchema } from '@/lib/validation'
+import { getSession } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const template = await templateDB.getById(id)
 
-    if (!template) {
+    if (!template || template.user_id !== session.userId) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
@@ -26,9 +31,18 @@ async function handleUpdate(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const body = await request.json()
     const validated = CreateTemplateSchema.partial().parse(body)
+
+    const existing = await templateDB.getById(id)
+    if (!existing || existing.user_id !== session.userId) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
 
     const updated = await templateDB.update(id, {
       ...validated,
@@ -65,9 +79,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const existing = await templateDB.getById(id)
-    if (!existing) {
+    if (!existing || existing.user_id !== session.userId) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
     templateDB.delete(id)

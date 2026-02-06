@@ -531,7 +531,7 @@ export function setReminderForTodo(todoId: string, reminderMinutes: number) {
 export function getDueReminders(now: Date) {
   const database = getDb()
   const stmt = database.prepare(`
-    SELECT r.*, t.due_date, t.user_id FROM reminders r
+    SELECT r.*, t.due_date, t.user_id, t.title FROM reminders r
     JOIN todos t ON r.todo_id = t.id
     WHERE t.due_date IS NOT NULL
     AND datetime(t.due_date, '-' || r.reminder_minutes || ' minutes') <= datetime(?)

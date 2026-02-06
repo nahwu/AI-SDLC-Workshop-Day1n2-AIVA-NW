@@ -209,12 +209,25 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    setUsername('abc')
+    const loadSession = async () => {
+      const response = await fetch('/api/auth/me')
+      if (response.ok) {
+        const data = await response.json()
+        setUsername(data.username || 'User')
+      }
+    }
+
+    loadSession()
     fetchTodos()
     fetchTags()
     fetchTemplates()
     fetchHolidays()
   }, [fetchTodos, fetchTags, fetchTemplates, fetchHolidays])
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }
 
   const handleTodoAdded = () => {
     fetchTodos()
@@ -439,6 +452,21 @@ export default function Home() {
                   </svg>
                 </span>
                 Templates
+              </button>
+              <button
+                className="px-3 py-2 rounded-lg font-medium text-sm inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                onClick={handleLogout}
+                data-testid="logout-button"
+              >
+                <span className="inline-flex h-4 w-4 items-center justify-center">
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                    <path d="M8 3a1 1 0 0 1 1-1h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9a1 1 0 1 1 0-2h4V4H9a1 1 0 0 1-1-1z" />
+                    <path d="M3 10a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z" />
+                    <path d="M6.707 7.707a1 1 0 0 1 0-1.414l2-2a1 1 0 1 1 1.414 1.414L8.414 7H6.707z" />
+                    <path d="M8.414 13l1.707 1.293a1 1 0 0 1-1.414 1.414l-2-2a1 1 0 0 1 0-1.414L8.414 9z" />
+                  </svg>
+                </span>
+                Logout
               </button>
               <div className="relative">
                 <button

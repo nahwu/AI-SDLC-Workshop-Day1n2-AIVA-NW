@@ -1,16 +1,21 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { UpdateTagSchema } from '@/lib/validation'
 import { tagDB } from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const tag = await tagDB.getById(id)
 
-    if (!tag) {
+    if (!tag || tag.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Tag not found' },
         { status: 404 }
@@ -35,12 +40,16 @@ async function handleUpdate(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const body = await request.json()
     const validated = UpdateTagSchema.parse(body)
 
     const tag = await tagDB.getById(id)
-    if (!tag) {
+    if (!tag || tag.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Tag not found' },
         { status: 404 }
@@ -81,9 +90,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const tag = await tagDB.getById(id)
-    if (!tag) {
+    if (!tag || tag.user_id !== session.userId) {
       return NextResponse.json(
         { error: 'Tag not found' },
         { status: 404 }

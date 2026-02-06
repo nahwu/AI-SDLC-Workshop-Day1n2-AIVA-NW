@@ -1,11 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { todoDB } from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 async function handleUpdate(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     const body = await request.json()
 
@@ -50,6 +55,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
     const { id } = await params
     todoDB.deleteSubtask(id)
 
